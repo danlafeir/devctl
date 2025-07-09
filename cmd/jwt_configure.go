@@ -11,12 +11,13 @@ import (
 )
 
 var (
-	cfgProfile      string
-	cfgClientID     string
-	cfgClientSecret string
-	cfgTokenURL     string
-	cfgScopes       string
-	cfgAudience     string
+	cfgProfile                string
+	cfgClientID               string
+	cfgClientSecret           string
+	cfgTokenURL               string
+	cfgScopes                 string
+	cfgAudience               string
+	configureKeychainProvider keychain.KeychainProvider = keychain.DefaultKeychain
 )
 
 var jwtConfigureCmd = &cobra.Command{
@@ -83,11 +84,11 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 		Audience:     cfgAudience,
 	}
 
-	err := keychain.StoreOAuthClient(cfgProfile, client)
+	err := configureKeychainProvider.StoreOAuthClient(cfgProfile, client)
 	if err != nil {
 		return fmt.Errorf("failed to store OAuth client: %w", err)
 	}
 
 	fmt.Printf("Profile '%s' configured successfully.\n", cfgProfile)
 	return nil
-} 
+}

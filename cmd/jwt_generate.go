@@ -6,6 +6,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/danlafeir/devctl/pkg/keychain"
 	"github.com/spf13/cobra"
@@ -13,7 +15,9 @@ import (
 )
 
 var (
-	profileFlag string
+	profileFlag      string
+	keychainProvider keychain.KeychainProvider = keychain.DefaultKeychain
+	outputWriter     io.Writer                 = os.Stdout
 )
 
 // jwtGenerateCmd represents the jwt generate command
@@ -36,12 +40,16 @@ func init() {
 }
 
 func runJWTGenerate(cmd *cobra.Command, args []string) error {
+	return runJWTGenerateWithWriter(cmd, args, outputWriter)
+}
+
+func runJWTGenerateWithWriter(cmd *cobra.Command, args []string, w io.Writer) error {
 	if profileFlag == "" {
 		return fmt.Errorf("profile flag is required")
 	}
 
-	// Get OAuth client from keychain
-	client, err := keychain.GetOAuthClient(profileFlag)
+	// Get OAuth client from keychain (now via interface)
+	client, err := keychainProvider.GetOAuthClient(profileFlag)
 	if err != nil {
 		return fmt.Errorf("failed to get OAuth client from keychain: %w", err)
 	}
@@ -62,6 +70,6 @@ func runJWTGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get token from OAuth server: %w", err)
 	}
 
-	fmt.Println(tok.AccessToken)
-	return nil
+	_, err = fmt.Fprintln(w, tok.AccessToken)
+	return err
 }

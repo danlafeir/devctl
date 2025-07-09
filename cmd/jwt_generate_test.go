@@ -4,33 +4,14 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+	"net/http"
+	"net/http/httptest"
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/danlafeir/devctl/pkg/keychain"
 )
-
-// generateTestKeyPair creates a test RSA key pair
-func generateTestKeyPair() (privateKeyPEM string, err error) {
-	// Generate private key
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return "", err
-	}
-
-	// Encode private key to PEM
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	privateKeyBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	}
-	privateKeyPEM = string(pem.EncodeToMemory(privateKeyBlock))
-
-	return privateKeyPEM, nil
-}
 
 func TestJWTGenerateCommand_Help(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "generate", "--help")
@@ -41,7 +22,7 @@ func TestJWTGenerateCommand_Help(t *testing.T) {
 	}
 
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "Generate a JWT token using configured OAuth client") {
+	if !strings.Contains(outputStr, "Generate a JWT token using a configured OAuth client stored in the system keychain.") {
 		t.Error("Help output does not contain expected description")
 	}
 	if !strings.Contains(outputStr, "--profile") {
@@ -57,8 +38,8 @@ func TestJWTGenerateCommand_MissingProfile(t *testing.T) {
 		t.Error("Expected error when running without profile flag, got nil")
 	}
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "profile flag is required") {
-		t.Error("Error output does not mention profile flag")
+	if !strings.Contains(outputStr, "required flag(s) \"profile\" not set") {
+		t.Errorf("Error output does not mention required flag: got: %s", outputStr)
 	}
 }
 
@@ -91,4 +72,53 @@ func isMacOS() bool {
 		return false
 	}
 	return strings.TrimSpace(string(output)) == "Darwin"
+}
+
+// mockOAuthServer starts a simple OAuth2 token endpoint for testing
+func mockOAuthServer(t *testing.T, tokenValue string) (serverURL string, closeFn func()) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" && r.Method == "POST" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write([]byte(`{"access_token": "` + tokenValue + `", "token_type": "bearer", "expires_in": 3600}`))
+			return
+		}
+		w.WriteHeader(404)
+	}))
+	return ts.URL + "/token", ts.Close
+}
+
+func TestJWTGenerateCommand_ValidProfile_MockOAuth(t *testing.T) {
+	// Use a mock keychain for this test
+	mockKC := keychain.NewMockKeychain()
+	keychainProvider = mockKC
+
+	tokenValue := "mocked-token-123"
+	tokenURL, closeServer := mockOAuthServer(t, tokenValue)
+	defer closeServer()
+
+	profile := "test-profile-mock-oauth"
+	// Store a mock OAuth client in the mock keychain
+	err := mockKC.StoreOAuthClient(profile, &keychain.OAuthClient{
+		ClientID:     "id",
+		ClientSecret: "secret",
+		TokenURL:     tokenURL,
+		Scopes:       "scope1",
+		Audience:     "aud",
+	})
+	if err != nil {
+		t.Fatalf("Failed to store mock OAuth client: %v", err)
+	}
+
+	// Simulate the CLI logic directly by calling runJWTGenerateWithWriter
+	profileFlag = profile
+	var sb strings.Builder
+	err = runJWTGenerateWithWriter(nil, nil, &sb)
+	if err != nil {
+		t.Fatalf("runJWTGenerateWithWriter failed: %v", err)
+	}
+	outStr := strings.TrimSpace(sb.String())
+	if outStr != tokenValue {
+		t.Errorf("Expected token %q, got %q", tokenValue, outStr)
+	}
 }
