@@ -53,16 +53,16 @@ This will also produce a binary named `devctl` in the `bin/` directory, but for 
 [ ] persistent secrets
 [ ] plugin capability 
 
-## Install 
+## Quick Install (Online Script)
 
-You can install the latest `devctl` release automatically with a one-liner (Linux/macOS):
+You can install the latest `devctl` binary automatically with a one-liner (Linux/macOS):
 
 ```sh
-curl -sSL https://github.com/danlafeir/devctl/releases/latest/download/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/danlafeir/devctl/main/scripts/install.sh | sh
 ```
 
-This script will detect your OS and architecture, download the correct binary, and install it to `/usr/local/bin` (you may be prompted for your password).
+This script will detect your OS and architecture, download the correct binary from the main branch, and install it to `/usr/local/bin` (you may be prompted for your password).
 
 **Security tip:** Always review install scripts before piping to `sh`.
 
-For more details or manual installation, see the [Releases](https://github.com/danlafeir/devctl/releases) page. 
+For manual installation, download binaries from the `bin/release/` directory in this repository. 
