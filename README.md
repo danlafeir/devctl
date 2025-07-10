@@ -44,15 +44,6 @@ GOOS=linux GOARCH=amd64 make build
 
 This will also produce a binary named `devctl` in the `bin/` directory, but for the specified target system.
 
----
-
-### Todo
-
-[ ] JWT generator 
-[ ] persistent configuration
-[ ] persistent secrets
-[ ] plugin capability 
-
 ## Quick Install (Online Script)
 
 You can install the latest `devctl` binary automatically with a one-liner (Linux/macOS):
@@ -64,5 +55,3 @@ curl -sSL https://raw.githubusercontent.com/danlafeir/devctl/main/scripts/instal
 This script will detect your OS and architecture, download the correct binary from the main branch, and install it to `/usr/local/bin` (you may be prompted for your password).
 
 **Security tip:** Always review install scripts before piping to `sh`.
-
-For manual installation, download binaries from the `bin/release/` directory in this repository. 
