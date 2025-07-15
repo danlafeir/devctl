@@ -13,6 +13,10 @@ import (
 	"github.com/danlafeir/devctl/pkg/keychain"
 )
 
+func init() {
+	BuildGitHash = "testhash"
+}
+
 func TestJWTGenerateCommand_Help(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "generate", "--help")
 	cmd.Dir = "../"

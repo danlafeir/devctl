@@ -8,6 +8,10 @@ import (
 	"github.com/danlafeir/devctl/pkg/keychain"
 )
 
+func init() {
+	BuildGitHash = "testhash"
+}
+
 func TestJWTConfigureCommand_Flags(t *testing.T) {
 	testProfile := "test-profile-configure-flags"
 
@@ -96,4 +100,4 @@ func TestJWTConfigureCommand_Interactive(t *testing.T) {
 	if client.Audience != "aud-interactive" {
 		t.Errorf("Audience mismatch: got %s, want aud-interactive", client.Audience)
 	}
-} 
+}
