@@ -52,5 +52,7 @@ func checkUpgrade() {
 
 func main() {
 	checkUpgrade()
+	cmd.BuildGitHash = BuildGitHash
+	cmd.BuildLatestHash = BuildLatestHash
 	cmd.Execute()
 }
