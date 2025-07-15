@@ -23,9 +23,8 @@ var rootCmd = &cobra.Command{
 }
 
 var updateCmd = &cobra.Command{
-	Use:    "update",
-	Short:  "Update devctl to the latest version",
-	Hidden: true,
+	Use:   "update",
+	Short: "Update devctl to the latest version",
 	Run: func(cmd *cobra.Command, args []string) {
 		osName := runtime.GOOS
 		arch := runtime.GOARCH
