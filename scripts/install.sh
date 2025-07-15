@@ -21,7 +21,13 @@ case "$ARCH" in
   *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-FILENAME="$BINARY-$OS-$ARCH"
+# Find the latest binary for this OS/ARCH by querying the GitHub API
+API_URL="https://api.github.com/repos/$REPO/contents/bin/release"
+FILENAME=$(curl -sSL "$API_URL" | grep -o '"name": *"'$BINARY'-'$OS'-'$ARCH'-[a-zA-Z0-9]*"' | head -n1 | sed 's/.*: *"\([^"]*\)"/\1/')
+if [ -z "$FILENAME" ]; then
+  echo "Could not find a release binary for $OS/$ARCH." >&2
+  exit 1
+fi
 URL="https://raw.githubusercontent.com/$REPO/main/bin/release/$FILENAME"
 
 TMP=$(mktemp)
