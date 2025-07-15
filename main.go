@@ -19,7 +19,7 @@ import (
 // BuildGitHash is set at build time via -ldflags
 var BuildGitHash = "dev"
 
-func getRemoteLatestHash() string {
+func getRemoteLatestFilename() string {
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 	if osName == "darwin" {
@@ -36,8 +36,6 @@ func getRemoteLatestHash() string {
 	} else {
 		return ""
 	}
-	// The remote path is: https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/devctl-<os>-<arch>-<hash>
-	// We'll list the directory and parse the latest hash
 	url := "https://api.github.com/repos/danlafeir/devctl/contents/bin/release"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -56,26 +54,19 @@ func getRemoteLatestHash() string {
 	if err != nil {
 		return ""
 	}
-	// Look for filenames matching our pattern
 	prefix := fmt.Sprintf("devctl-%s-%s-", osName, arch)
-	var latestHash string
+	var latest string
 	for _, line := range strings.Split(string(body), "\n") {
 		if idx := strings.Index(line, prefix); idx != -1 {
-			// Extract the filename
 			start := idx
 			end := strings.Index(line[start:], "\"")
 			if end != -1 {
 				name := line[start : start+end]
-				if len(name) > len(prefix) {
-					hash := name[len(prefix):]
-					if len(hash) == 8 || len(hash) == 7 { // short hash
-						latestHash = hash
-					}
-				}
+				latest = name // last match is latest (if sorted)
 			}
 		}
 	}
-	return latestHash
+	return latest
 }
 
 func checkUpgrade() {
@@ -97,7 +88,7 @@ func checkUpgrade() {
 	}
 
 	// Check remote for latest hash
-	remoteHash := getRemoteLatestHash()
+	remoteHash := getRemoteLatestFilename()
 	if remoteHash != "" && remoteHash != BuildGitHash {
 		fmt.Fprintf(os.Stderr, "A new version of devctl is available (hash: %s). Please upgrade.\n", remoteHash)
 	}

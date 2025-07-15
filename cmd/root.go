@@ -7,14 +7,13 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"runtime"
 
 	"github.com/spf13/cobra"
 )
 
 // These are provided by main.go
 var BuildGitHash string
-var getRemoteLatestHash func() string
+var getRemoteLatestFilename func() string
 
 var rootCmd = &cobra.Command{
 	Use:   "devctl",
@@ -26,64 +25,44 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update devctl to the latest version",
 	Run: func(cmd *cobra.Command, args []string) {
-		osName := runtime.GOOS
-		arch := runtime.GOARCH
-		if osName == "darwin" {
-			osName = "darwin"
-		} else if osName == "linux" {
-			osName = "linux"
-		} else {
-			cmd.PrintErrln("Unsupported OS for update")
+		filename := getRemoteLatestFilename()
+		if filename == "" {
+			cmd.PrintErrln("No update binary found for your platform.")
 			return
 		}
-		if arch == "amd64" || arch == "x86_64" {
-			arch = "amd64"
-		} else if arch == "arm64" || arch == "aarch64" {
-			arch = "arm64"
-		} else {
-			cmd.PrintErrln("Unsupported architecture for update")
-			return
-		}
-		// Get latest hash from remote
-		latestHash := getRemoteLatestHash()
-		if latestHash == "" {
-			cmd.PrintErrln("Could not determine latest version.")
-			return
-		}
-		if latestHash == BuildGitHash {
-			cmd.Println("Already up to date.")
-			return
-		}
-		// Download the latest binary
-		filename := "devctl-" + osName + "-" + arch + "-" + latestHash
 		url := "https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/" + filename
 		cmd.Printf("Downloading %s...\n", url)
 		resp, err := http.Get(url)
-		if err != nil || resp.StatusCode != 200 {
-			cmd.PrintErrln("Failed to download latest binary.")
+		if err != nil {
+			cmd.PrintErrf("Failed to download latest binary: %v\n", err)
+			return
+		}
+		if resp.StatusCode != 200 {
+			cmd.PrintErrf("Failed to download latest binary: HTTP %d\n", resp.StatusCode)
 			return
 		}
 		defer resp.Body.Close()
 		tmpFile, err := os.CreateTemp("", "devctl-update-*")
 		if err != nil {
-			cmd.PrintErrln("Failed to create temp file.")
+			cmd.PrintErrf("Failed to create temp file: %v\n", err)
 			return
 		}
 		defer os.Remove(tmpFile.Name())
 		_, err = io.Copy(tmpFile, resp.Body)
 		if err != nil {
-			cmd.PrintErrln("Failed to write binary.")
+			cmd.PrintErrf("Failed to write binary: %v\n", err)
 			return
 		}
 		tmpFile.Close()
-		os.Chmod(tmpFile.Name(), 0o755)
-		// Replace the current binary
+		if err := os.Chmod(tmpFile.Name(), 0o755); err != nil {
+			cmd.PrintErrf("Failed to set permissions on new binary: %v\n", err)
+			return
+		}
 		self, err := os.Executable()
 		if err != nil {
 			cmd.PrintErrln("Could not determine current executable path.")
 			return
 		}
-		// On Unix, we can move the file in place
 		err = os.Rename(tmpFile.Name(), self)
 		if err != nil {
 			cmd.PrintErrf("Failed to replace binary: %v\n", err)
