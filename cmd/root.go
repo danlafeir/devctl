@@ -7,13 +7,14 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 
 	"github.com/spf13/cobra"
 )
 
 // These are provided by main.go
 var BuildGitHash string
-var getRemoteLatestFilename func() string
+var BuildLatestHash string
 
 var rootCmd = &cobra.Command{
 	Use:   "devctl",
@@ -25,20 +26,42 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update devctl to the latest version",
 	Run: func(cmd *cobra.Command, args []string) {
-		filename := getRemoteLatestFilename()
-		if filename == "" {
-			cmd.PrintErrln("No update binary found for your platform.")
+		osName := runtime.GOOS
+		arch := runtime.GOARCH
+		if osName == "darwin" {
+			osName = "darwin"
+		} else if osName == "linux" {
+			osName = "linux"
+		} else {
+			cmd.PrintErrln("Unsupported OS for update")
 			return
 		}
+		if arch == "amd64" || arch == "x86_64" {
+			arch = "amd64"
+		} else if arch == "arm64" || arch == "aarch64" {
+			arch = "arm64"
+		} else {
+			cmd.PrintErrln("Unsupported architecture for update")
+			return
+		}
+		if BuildLatestHash == "" || BuildLatestHash == "dev" {
+			cmd.PrintErrln("No update binary reference available.")
+			return
+		}
+		if BuildGitHash == BuildLatestHash {
+			cmd.Println("Already up to date.")
+			return
+		}
+		filename := "devctl-" + osName + "-" + arch + "-" + BuildLatestHash
 		url := "https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/" + filename
 		cmd.Printf("Downloading %s...\n", url)
 		resp, err := http.Get(url)
 		if err != nil {
-			cmd.PrintErrf("Failed to download latest binary: %v\n", err)
+			cmd.PrintErrf("Failed to download binary: %v\n", err)
 			return
 		}
 		if resp.StatusCode != 200 {
-			cmd.PrintErrf("Failed to download latest binary: HTTP %d\n", resp.StatusCode)
+			cmd.PrintErrf("Failed to download binary: HTTP %d\n", resp.StatusCode)
 			return
 		}
 		defer resp.Body.Close()

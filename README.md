@@ -1,6 +1,6 @@
 # devctl
 
-I want a developer interface that codifies rote logic execution. 
+I want a developer interface that codifies rote logic execution. And I am experimenting with AI Agentic code to find the sharp edges.
 
 ## Getting Started
 
