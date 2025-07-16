@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"runtime"
 
@@ -144,8 +145,21 @@ var updateCmd = &cobra.Command{
 		}
 		err = os.Rename(tmpFile.Name(), self)
 		if err != nil {
-			cmd.PrintErrf("Failed to replace binary: %v\n", err)
-			return
+			// Try with sudo if permission denied
+			if os.IsPermission(err) {
+				cmd.Println("Permission denied. Retrying with sudo...")
+				mvCmd := exec.Command("sudo", "mv", tmpFile.Name(), self)
+				mvCmd.Stdin = os.Stdin
+				mvCmd.Stdout = os.Stdout
+				mvCmd.Stderr = os.Stderr
+				if err := mvCmd.Run(); err != nil {
+					cmd.PrintErrf("Failed to replace binary with sudo: %v\n", err)
+					return
+				}
+			} else {
+				cmd.PrintErrf("Failed to replace binary: %v\n", err)
+				return
+			}
 		}
 		cmd.Println("devctl updated to latest version.")
 	},
