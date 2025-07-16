@@ -6,14 +6,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"regexp"
-	"runtime"
 
 	"github.com/danlafeir/devctl/pkg/plugin"
+	"github.com/danlafeir/devctl/pkg/update"
 	"github.com/spf13/cobra"
 )
 
@@ -75,93 +73,7 @@ var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update devctl to the latest version",
 	Run: func(cmd *cobra.Command, args []string) {
-		osName := runtime.GOOS
-		arch := runtime.GOARCH
-		if osName == "darwin" {
-			osName = "darwin"
-		} else if osName == "linux" {
-			osName = "linux"
-		} else {
-			cmd.PrintErrln("Unsupported OS for update")
-			return
-		}
-		if arch == "amd64" || arch == "x86_64" {
-			arch = "amd64"
-		} else if arch == "arm64" || arch == "aarch64" {
-			arch = "arm64"
-		} else {
-			cmd.PrintErrln("Unsupported architecture for update")
-			return
-		}
-
-		// Get the latest hash from GitHub
-		latestHash, err := getLatestHash(osName, arch)
-		if err != nil {
-			cmd.PrintErrf("Failed to get latest hash: %v\n", err)
-			return
-		}
-
-		cmd.Printf("Current hash: %s\n", BuildGitHash)
-		cmd.Printf("Latest hash: %s\n", latestHash)
-
-		if BuildGitHash == latestHash {
-			cmd.Println("Already up to date.")
-			return
-		}
-
-		filename := "devctl-" + osName + "-" + arch + "-" + latestHash
-		url := "https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/" + filename
-		cmd.Printf("Downloading %s...\n", url)
-		resp, err := http.Get(url)
-		if err != nil {
-			cmd.PrintErrf("Failed to download binary: %v\n", err)
-			return
-		}
-		if resp.StatusCode != 200 {
-			cmd.PrintErrf("Failed to download binary: HTTP %d\n", resp.StatusCode)
-			return
-		}
-		defer resp.Body.Close()
-		tmpFile, err := os.CreateTemp("", "devctl-update-*")
-		if err != nil {
-			cmd.PrintErrf("Failed to create temp file: %v\n", err)
-			return
-		}
-		defer os.Remove(tmpFile.Name())
-		_, err = io.Copy(tmpFile, resp.Body)
-		if err != nil {
-			cmd.PrintErrf("Failed to write binary: %v\n", err)
-			return
-		}
-		tmpFile.Close()
-		if err := os.Chmod(tmpFile.Name(), 0o755); err != nil {
-			cmd.PrintErrf("Failed to set permissions on new binary: %v\n", err)
-			return
-		}
-		self, err := os.Executable()
-		if err != nil {
-			cmd.PrintErrln("Could not determine current executable path.")
-			return
-		}
-		err = os.Rename(tmpFile.Name(), self)
-		if err != nil {
-			// Try with sudo if permission denied
-			if os.IsPermission(err) {
-				cmd.Println("Permission denied. Retrying with sudo...")
-				mvCmd := exec.Command("sudo", "mv", tmpFile.Name(), self)
-				mvCmd.Stdin = os.Stdin
-				mvCmd.Stdout = os.Stdout
-				mvCmd.Stderr = os.Stderr
-				if err := mvCmd.Run(); err != nil {
-					cmd.PrintErrf("Failed to replace binary with sudo: %v\n", err)
-					return
-				}
-			} else {
-				cmd.PrintErrf("Failed to replace binary: %v\n", err)
-				return
-			}
-		}
-		cmd.Println("devctl updated to latest version.")
+		update.RunUpdate(BuildGitHash, cmd)
 	},
 }
 
