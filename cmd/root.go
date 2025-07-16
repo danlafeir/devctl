@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 
@@ -150,6 +152,58 @@ var updateCmd = &cobra.Command{
 	},
 }
 
+// scanPlugins finds all devctl-* executables in PATH and returns a map of plugin name to full path
+func scanPlugins() map[string]string {
+	plugins := make(map[string]string)
+	pathEnv := os.Getenv("PATH")
+	for _, dir := range filepath.SplitList(pathEnv) {
+		matches, err := filepath.Glob(filepath.Join(dir, "devctl-*"))
+		if err != nil {
+			continue
+		}
+		for _, match := range matches {
+			info, err := os.Stat(match)
+			if err != nil || info.IsDir() {
+				continue
+			}
+			if info.Mode()&0111 == 0 { // not executable
+				continue
+			}
+			name := filepath.Base(match)
+			if name == "devctl" || name == "devctl.exe" {
+				continue
+			}
+			if len(name) > len("devctl-") {
+				pluginName := name[len("devctl-"):]
+				plugins[pluginName] = match
+			}
+		}
+	}
+	return plugins
+}
+
+func registerPlugins() {
+	plugins := scanPlugins()
+	for name, path := range plugins {
+		pluginCmd := &cobra.Command{
+			Use:   name,
+			Short: "Plugin: " + name,
+			Run: func(cmd *cobra.Command, args []string) {
+				// Proxy execution to the plugin binary
+				c := exec.Command(path, args...)
+				c.Stdin = os.Stdin
+				c.Stdout = os.Stdout
+				c.Stderr = os.Stderr
+				if err := c.Run(); err != nil {
+					cmd.PrintErrf("Plugin %s failed: %v\n", name, err)
+					os.Exit(1)
+				}
+			},
+		}
+		rootCmd.AddCommand(pluginCmd)
+	}
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -176,4 +230,5 @@ func init() {
 	// Disable the help command
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.AddCommand(updateCmd)
+	registerPlugins()
 }
