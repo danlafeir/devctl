@@ -4,9 +4,12 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -20,6 +23,50 @@ var rootCmd = &cobra.Command{
 	Use:   "devctl",
 	Short: "A pluggable cli to reduce developer friction",
 	Long:  `This is a tool to avoid 'magic spellbooks' that people accumulate with text files and copied commands`,
+}
+
+// getLatestHash fetches the latest available hash from GitHub
+func getLatestHash(osName, arch string) (string, error) {
+	apiURL := "https://api.github.com/repos/danlafeir/devctl/contents/bin/release"
+
+	resp, err := http.Get(apiURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch from GitHub API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	}
+
+	var contents []struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&contents); err != nil {
+		return "", fmt.Errorf("failed to decode GitHub API response: %v", err)
+	}
+
+	// Find the latest binary for this OS/ARCH
+	pattern := fmt.Sprintf("devctl-%s-%s-([a-zA-Z0-9]+)", osName, arch)
+	re := regexp.MustCompile(pattern)
+
+	var latestHash string
+	for _, item := range contents {
+		matches := re.FindStringSubmatch(item.Name)
+		if len(matches) > 1 {
+			hash := matches[1]
+			if hash > latestHash {
+				latestHash = hash
+			}
+		}
+	}
+
+	if latestHash == "" {
+		return "", fmt.Errorf("no binary found for %s/%s", osName, arch)
+	}
+
+	return latestHash, nil
 }
 
 var updateCmd = &cobra.Command{
@@ -44,15 +91,23 @@ var updateCmd = &cobra.Command{
 			cmd.PrintErrln("Unsupported architecture for update")
 			return
 		}
-		if BuildLatestHash == "" || BuildLatestHash == "dev" {
-			cmd.PrintErrln("No update binary reference available.")
+
+		// Get the latest hash from GitHub
+		latestHash, err := getLatestHash(osName, arch)
+		if err != nil {
+			cmd.PrintErrf("Failed to get latest hash: %v\n", err)
 			return
 		}
-		if BuildGitHash == BuildLatestHash {
+
+		cmd.Printf("Current hash: %s\n", BuildGitHash)
+		cmd.Printf("Latest hash: %s\n", latestHash)
+
+		if BuildGitHash == latestHash {
 			cmd.Println("Already up to date.")
 			return
 		}
-		filename := "devctl-" + osName + "-" + arch + "-" + BuildLatestHash
+
+		filename := "devctl-" + osName + "-" + arch + "-" + latestHash
 		url := "https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/" + filename
 		cmd.Printf("Downloading %s...\n", url)
 		resp, err := http.Get(url)
