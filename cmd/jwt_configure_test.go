@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/danlafeir/devctl/pkg/keychain"
+	"github.com/danlafeir/devctl/pkg/secrets"
 )
 
 func init() {
@@ -16,8 +16,8 @@ func TestJWTConfigureCommand_Flags(t *testing.T) {
 	testProfile := "test-profile-configure-flags"
 
 	// Clean up before and after
-	keychain.DeleteOAuthClient(testProfile)
-	defer keychain.DeleteOAuthClient(testProfile)
+	secrets.DeleteOAuthClient(testProfile)
+	defer secrets.DeleteOAuthClient(testProfile)
 
 	cmd := exec.Command("go", "run", "main.go", "jwt", "configure",
 		"--profile", testProfile,
@@ -34,7 +34,7 @@ func TestJWTConfigureCommand_Flags(t *testing.T) {
 	}
 
 	// Check that the profile was stored
-	client, err := keychain.GetOAuthClient(testProfile)
+	client, err := secrets.GetOAuthClient(testProfile)
 	if err != nil {
 		t.Fatalf("Failed to get stored profile: %v", err)
 	}
@@ -59,8 +59,8 @@ func TestJWTConfigureCommand_Interactive(t *testing.T) {
 	testProfile := "test-profile-configure-interactive"
 
 	// Clean up before and after
-	keychain.DeleteOAuthClient(testProfile)
-	defer keychain.DeleteOAuthClient(testProfile)
+	secrets.DeleteOAuthClient(testProfile)
+	defer secrets.DeleteOAuthClient(testProfile)
 
 	// Simulate user input for all prompts
 	input := strings.Join([]string{
@@ -81,7 +81,7 @@ func TestJWTConfigureCommand_Interactive(t *testing.T) {
 	}
 
 	// Check that the profile was stored
-	client, err := keychain.GetOAuthClient(testProfile)
+	client, err := secrets.GetOAuthClient(testProfile)
 	if err != nil {
 		t.Fatalf("Failed to get stored profile: %v", err)
 	}

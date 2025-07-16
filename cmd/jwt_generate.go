@@ -9,25 +9,24 @@ import (
 	"io"
 	"os"
 
-	"github.com/danlafeir/devctl/pkg/keychain"
+	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
 var (
-	profileFlag      string
-	keychainProvider keychain.KeychainProvider = keychain.DefaultKeychain
-	outputWriter     io.Writer                 = os.Stdout
+	profileFlag     string
+	secretsProvider secrets.SecretsProvider = secrets.DefaultSecretsProvider
+	outputWriter    io.Writer               = os.Stdout
 )
 
 // jwtGenerateCmd represents the jwt generate command
 var jwtGenerateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate a JWT token using configured OAuth client",
-	Long: `Generate a JWT token using a configured OAuth client stored in the system keychain.
+	Long: `Generate a JWT token using a configured OAuth client stored in the system secrets.
 	
-This command retrieves OAuth client credentials from the keychain using the specified
-profile and generates a JWT token for authentication.`,
+This command retrieves OAuth client credentials from the secrets using the specified profile.`,
 	RunE: runJWTGenerate,
 }
 
@@ -48,10 +47,10 @@ func runJWTGenerateWithWriter(cmd *cobra.Command, args []string, w io.Writer) er
 		return fmt.Errorf("profile flag is required")
 	}
 
-	// Get OAuth client from keychain (now via interface)
-	client, err := keychainProvider.GetOAuthClient(profileFlag)
+	// Get OAuth client from secrets (now via interface)
+	client, err := secretsProvider.GetOAuthClient(profileFlag)
 	if err != nil {
-		return fmt.Errorf("failed to get OAuth client from keychain: %w", err)
+		return fmt.Errorf("failed to get OAuth client from secrets: %w", err)
 	}
 
 	// Use clientcredentials flow to get a token

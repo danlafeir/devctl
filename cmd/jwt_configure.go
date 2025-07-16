@@ -6,24 +6,24 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danlafeir/devctl/pkg/keychain"
+	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 )
 
 var (
-	cfgProfile                string
-	cfgClientID               string
-	cfgClientSecret           string
-	cfgTokenURL               string
-	cfgScopes                 string
-	cfgAudience               string
-	configureKeychainProvider keychain.KeychainProvider = keychain.DefaultKeychain
+	cfgProfile               string
+	cfgClientID              string
+	cfgClientSecret          string
+	cfgTokenURL              string
+	cfgScopes                string
+	cfgAudience              string
+	configureSecretsProvider secrets.SecretsProvider = secrets.DefaultSecretsProvider
 )
 
 var jwtConfigureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure an OAuth client profile for JWT generation",
-	Long:  `Add or update an OAuth client profile in your keychain for JWT generation.`,
+	Long:  `Add or update an OAuth client profile in your secrets for JWT generation.`,
 	RunE:  runJWTConfigure,
 }
 
@@ -76,7 +76,7 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 		cfgAudience = strings.TrimSpace(cfgAudience)
 	}
 
-	client := &keychain.OAuthClient{
+	client := &secrets.OAuthClient{
 		ClientID:     cfgClientID,
 		ClientSecret: cfgClientSecret,
 		TokenURL:     cfgTokenURL,
@@ -84,7 +84,7 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 		Audience:     cfgAudience,
 	}
 
-	err := configureKeychainProvider.StoreOAuthClient(cfgProfile, client)
+	err := configureSecretsProvider.StoreOAuthClient(cfgProfile, client)
 	if err != nil {
 		return fmt.Errorf("failed to store OAuth client: %w", err)
 	}

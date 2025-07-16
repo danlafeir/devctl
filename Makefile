@@ -6,7 +6,7 @@ GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GOOS?=$(shell go env GOOS)
 GOARCH?=$(shell go env GOARCH)
 
-.PHONY: all build build-all clean
+.PHONY: all build build-all clean test
 
 # Usage:
 #   make build           # builds for your current system, output: bin/devctl-<os>-<arch>-<hash>
@@ -34,3 +34,6 @@ build-all:
 
 clean:
 	rm -rf $(BUILD_DIR) 
+
+test:
+	go test ./... 

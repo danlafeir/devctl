@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/danlafeir/devctl/pkg/keychain"
+	"github.com/danlafeir/devctl/pkg/secrets"
 )
 
 func init() {
@@ -26,7 +26,7 @@ func TestJWTGenerateCommand_Help(t *testing.T) {
 	}
 
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "Generate a JWT token using a configured OAuth client stored in the system keychain.") {
+	if !strings.Contains(outputStr, "Generate a JWT token using a configured OAuth client stored in the system secrets.") {
 		t.Error("Help output does not contain expected description")
 	}
 	if !strings.Contains(outputStr, "--profile") {
@@ -55,7 +55,7 @@ func TestJWTGenerateCommand_NonExistentProfile(t *testing.T) {
 		t.Error("Expected error when running with non-existent profile, got nil")
 	}
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "failed to get OAuth client from keychain") {
+	if !strings.Contains(outputStr, "failed to get OAuth client from secrets") {
 		t.Error("Error output does not mention keychain retrieval failure")
 	}
 }
@@ -94,8 +94,8 @@ func mockOAuthServer(t *testing.T, tokenValue string) (serverURL string, closeFn
 
 func TestJWTGenerateCommand_ValidProfile_MockOAuth(t *testing.T) {
 	// Use a mock keychain for this test
-	mockKC := keychain.NewMockKeychain()
-	keychainProvider = mockKC
+	mockSecrets := secrets.NewMockSecrets()
+	secretsProvider = mockSecrets
 
 	tokenValue := "mocked-token-123"
 	tokenURL, closeServer := mockOAuthServer(t, tokenValue)
@@ -103,7 +103,7 @@ func TestJWTGenerateCommand_ValidProfile_MockOAuth(t *testing.T) {
 
 	profile := "test-profile-mock-oauth"
 	// Store a mock OAuth client in the mock keychain
-	err := mockKC.StoreOAuthClient(profile, &keychain.OAuthClient{
+	err := mockSecrets.StoreOAuthClient(profile, &secrets.OAuthClient{
 		ClientID:     "id",
 		ClientSecret: "secret",
 		TokenURL:     tokenURL,
