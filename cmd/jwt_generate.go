@@ -9,15 +9,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
 var (
-	profileFlag     string
-	secretsProvider secrets.SecretsProvider = secrets.DefaultSecretsProvider
-	outputWriter    io.Writer               = os.Stdout
+	profileFlag  string
+	outputWriter io.Writer = os.Stdout
 )
 
 // jwtGenerateCmd represents the jwt generate command
