@@ -19,15 +19,6 @@ type OAuthClient struct {
 	Audience     string `json:"audience"`
 }
 
-// SecretsProvider defines the interface for secrets operations
-// This allows for mocking in tests.
-type SecretsProvider interface {
-	GetOAuthClient(profile string) (*OAuthClient, error)
-	StoreOAuthClient(profile string, client *OAuthClient) error
-	ListOAuthProfiles() ([]string, error)
-	DeleteOAuthClient(profile string) error
-}
-
 // RealSecrets implements SecretsProvider using the system keychain
 type RealSecrets struct{}
 
@@ -56,7 +47,7 @@ func (r *RealSecrets) StoreOAuthClient(profile string, client *OAuthClient) erro
 
 // TODO: Move ListOAuthProfiles to SecretsProvider abstraction in the future
 func (r *RealSecrets) ListOAuthProfiles() ([]string, error) {
-	cmd := exec.Command("security", "find-generic-password", "-s", "devctl-oauth", "-g")
+	cmd := exec.Command("security", "find-generic-password", "-s", "cli.devctl.oauth", "-g")
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 44 {
@@ -81,60 +72,10 @@ func (r *RealSecrets) ListOAuthProfiles() ([]string, error) {
 
 // TODO: Move DeleteOAuthClient to SecretsProvider abstraction in the future
 func (r *RealSecrets) DeleteOAuthClient(profile string) error {
-	cmd := exec.Command("security", "delete-generic-password", "-s", "devctl-oauth", "-a", profile)
+	cmd := exec.Command("security", "delete-generic-password", "-s", "cli.devctl.oauth", "-a", profile)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to delete OAuth client from keychain: %w", err)
 	}
-	return nil
-}
-
-// DefaultSecretsProvider is the global secrets provider used in production
-var DefaultSecretsProvider SecretsProvider = &RealSecrets{}
-
-// For backward compatibility, keep the old function names as wrappers
-func GetOAuthClient(profile string) (*OAuthClient, error) {
-	return DefaultSecretsProvider.GetOAuthClient(profile)
-}
-func StoreOAuthClient(profile string, client *OAuthClient) error {
-	return DefaultSecretsProvider.StoreOAuthClient(profile, client)
-}
-func ListOAuthProfiles() ([]string, error) {
-	return DefaultSecretsProvider.ListOAuthProfiles()
-}
-func DeleteOAuthClient(profile string) error {
-	return DefaultSecretsProvider.DeleteOAuthClient(profile)
-}
-
-// MockSecrets is an in-memory implementation for tests
-// Not thread-safe, but sufficient for unit tests
-type MockSecrets struct {
-	store map[string]*OAuthClient
-}
-
-func NewMockSecrets() *MockSecrets {
-	return &MockSecrets{store: make(map[string]*OAuthClient)}
-}
-
-func (m *MockSecrets) GetOAuthClient(profile string) (*OAuthClient, error) {
-	c, ok := m.store[profile]
-	if !ok {
-		return nil, fmt.Errorf("profile not found")
-	}
-	return c, nil
-}
-func (m *MockSecrets) StoreOAuthClient(profile string, client *OAuthClient) error {
-	m.store[profile] = client
-	return nil
-}
-func (m *MockSecrets) ListOAuthProfiles() ([]string, error) {
-	profiles := make([]string, 0, len(m.store))
-	for k := range m.store {
-		profiles = append(profiles, k)
-	}
-	return profiles, nil
-}
-func (m *MockSecrets) DeleteOAuthClient(profile string) error {
-	delete(m.store, profile)
 	return nil
 }
 
@@ -149,7 +90,7 @@ type MacOSSecretsAdapter struct{}
 
 func (m *MacOSSecretsAdapter) Write(key string, value []byte) error {
 	// For now, treat key as the profile name and value as the JSON-encoded OAuthClient
-	cmd := exec.Command("security", "add-generic-password", "-U", "-s", "devctl-oauth", "-a", key, "-w", string(value))
+	cmd := exec.Command("security", "add-generic-password", "-U", "-s", "cli.devctl.oauth", "-a", key, "-w", string(value))
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to store secret in keychain: %w", err)
 	}
@@ -157,7 +98,7 @@ func (m *MacOSSecretsAdapter) Write(key string, value []byte) error {
 }
 
 func (m *MacOSSecretsAdapter) Read(key string) ([]byte, error) {
-	cmd := exec.Command("security", "find-generic-password", "-s", "devctl-oauth", "-a", key, "-w")
+	cmd := exec.Command("security", "find-generic-password", "-s", "cli.devctl.oauth", "-a", key, "-w")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve secret from keychain: %w", err)
