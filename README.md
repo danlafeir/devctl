@@ -52,6 +52,6 @@ You can install the latest `devctl` binary automatically with a one-liner (Linux
 curl -sSL https://raw.githubusercontent.com/danlafeir/devctl/main/scripts/install.sh | sh
 ```
 
-This script will detect your OS and architecture, download the correct binary from the main branch, and install it to `/usr/local/bin` (you may be prompted for your password).
+This script will detect your OS and architecture, download the correct binary from the main branch, and install it to `~/.local/bin` (you may be prompted for your password).
 
 **Security tip:** Always review install scripts before piping to `sh`.

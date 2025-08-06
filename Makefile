@@ -1,5 +1,5 @@
 APP_NAME=devctl
-BUILD_DIR=bin/release
+BUILD_DIR=bin
 GOFILES=$(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 # Default values (can be overridden)
