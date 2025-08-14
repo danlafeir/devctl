@@ -28,7 +28,7 @@ func (r *RealSecrets) GetOAuthClient(profile string) (*OAuthClient, error) {
 		return nil, fmt.Errorf("failed to retrieve OAuth client from secrets: %w", err)
 	}
 	var client OAuthClient
-	if err := json.Unmarshal(output, &client); err != nil {
+	if err := json.Unmarshal([]byte(output), &client); err != nil {
 		return nil, fmt.Errorf("failed to parse OAuth client data: %w", err)
 	}
 	return &client, nil
@@ -39,7 +39,7 @@ func (r *RealSecrets) StoreOAuthClient(profile string, client *OAuthClient) erro
 	if err != nil {
 		return fmt.Errorf("failed to serialize OAuth client: %w", err)
 	}
-	if err := DefaultSecrets.Write(profile, data); err != nil {
+	if err := DefaultSecrets.Write(profile, string(data)); err != nil {
 		return fmt.Errorf("failed to store OAuth client in secrets: %w", err)
 	}
 	return nil
@@ -81,29 +81,29 @@ func (r *RealSecrets) DeleteOAuthClient(profile string) error {
 
 // SecretsAdapter abstracts secure storage for secrets (local or remote)
 type SecretsAdapter interface {
-	Write(key string, value []byte) error
-	Read(key string) ([]byte, error)
+	Write(key string, value string) error
+	Read(key string) (string, error)
 }
 
 // MacOSSecretsAdapter implements SecretsAdapter using the MacOS keychain
 type MacOSSecretsAdapter struct{}
 
-func (m *MacOSSecretsAdapter) Write(key string, value []byte) error {
+func (m *MacOSSecretsAdapter) Write(key string, value string) error {
 	// For now, treat key as the profile name and value as the JSON-encoded OAuthClient
-	cmd := exec.Command("security", "add-generic-password", "-U", "-s", "cli.devctl.oauth", "-a", key, "-w", string(value))
+	cmd := exec.Command("security", "add-generic-password", "-U", "-s", "cli.devctl.oauth", "-a", key, "-w", value)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to store secret in keychain: %w", err)
 	}
 	return nil
 }
 
-func (m *MacOSSecretsAdapter) Read(key string) ([]byte, error) {
+func (m *MacOSSecretsAdapter) Read(key string) (string, error) {
 	cmd := exec.Command("security", "find-generic-password", "-s", "cli.devctl.oauth", "-a", key, "-w")
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve secret from keychain: %w", err)
+		return "", fmt.Errorf("failed to retrieve secret from keychain: %w", err)
 	}
-	return output, nil
+	return string(output), nil
 }
 
 // DefaultSecrets is the global secrets adapter (defaults to MacOS keychain)

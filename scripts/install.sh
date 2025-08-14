@@ -3,7 +3,7 @@ set -e
 
 REPO=danlafeir/devctl
 BINARY=devctl
-INSTALL_DIR=~/.local//bin
+INSTALL_DIR=~/.local/bin
 
 # Detect OS
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')

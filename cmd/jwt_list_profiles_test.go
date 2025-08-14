@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/danlafeir/devctl/pkg/secrets"
+	"github.com/danlafeir/devctl/testutil/mocks"
 )
 
 func TestJWTListCommand_Help(t *testing.T) {
@@ -24,7 +25,7 @@ func TestJWTListCommand_Help(t *testing.T) {
 }
 
 func TestJWTListCommand_NoProfiles(t *testing.T) {
-	mockSecrets := secrets.NewMockSecrets()
+	mockSecrets := mocks.NewMockSecrets()
 	secretsProvider = mockSecrets
 
 	// Capture stdout
@@ -50,7 +51,7 @@ func TestJWTListCommand_NoProfiles(t *testing.T) {
 }
 
 func TestJWTListCommand_WithProfiles(t *testing.T) {
-	mockSecrets := secrets.NewMockSecrets()
+	mockSecrets := mocks.NewMockSecrets()
 	secretsProvider = mockSecrets
 
 	profiles := []string{"profile1", "profile2", "profile3"}

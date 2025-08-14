@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/danlafeir/devctl/pkg/secrets"
+	"github.com/danlafeir/devctl/testutil/mocks"
 )
 
 func TestJWTDeleteCommand_Help(t *testing.T) {
@@ -48,7 +49,7 @@ func TestJWTDeleteCommand_NonExistentProfile(t *testing.T) {
 }
 
 func TestJWTDeleteCommand_Success_MockSecrets(t *testing.T) {
-	mockSecrets := secrets.NewMockSecrets()
+	mockSecrets := mocks.NewMockSecrets()
 	secretsProvider = mockSecrets
 
 	profile := "test-profile-delete"

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/danlafeir/devctl/pkg/secrets"
+	"github.com/danlafeir/devctl/testutil/mocks"
 )
 
 func init() {
@@ -94,7 +95,7 @@ func mockOAuthServer(t *testing.T, tokenValue string) (serverURL string, closeFn
 
 func TestJWTGenerateCommand_ValidProfile_MockOAuth(t *testing.T) {
 	// Use a mock keychain for this test
-	mockSecrets := secrets.NewMockSecrets()
+	mockSecrets := mocks.NewMockSecrets()
 	secretsProvider = mockSecrets
 
 	tokenValue := "mocked-token-123"
