@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package jwt
 
 import (
 	"net/http"
@@ -20,7 +20,7 @@ func init() {
 
 func TestJWTGenerateCommand_Help(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "generate", "--help")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Failed to run help command: %v", err)
@@ -37,7 +37,7 @@ func TestJWTGenerateCommand_Help(t *testing.T) {
 
 func TestJWTGenerateCommand_MissingProfile(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "generate")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Error("Expected error when running without profile flag, got nil")
@@ -50,7 +50,7 @@ func TestJWTGenerateCommand_MissingProfile(t *testing.T) {
 
 func TestJWTGenerateCommand_NonExistentProfile(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "generate", "--profile", "non-existent-profile")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Error("Expected error when running with non-existent profile, got nil")

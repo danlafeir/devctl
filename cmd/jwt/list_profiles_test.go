@@ -1,4 +1,4 @@
-package cmd
+package jwt
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 
 func TestJWTListCommand_Help(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "list", "--help")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Failed to run help command: %v", err)

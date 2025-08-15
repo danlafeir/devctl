@@ -1,4 +1,4 @@
-package cmd
+package jwt
 
 import (
 	"os/exec"
@@ -11,7 +11,7 @@ import (
 
 func TestJWTDeleteCommand_Help(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "delete", "--help")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Failed to run help command: %v", err)
@@ -24,7 +24,7 @@ func TestJWTDeleteCommand_Help(t *testing.T) {
 
 func TestJWTDeleteCommand_MissingArgument(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "delete")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Error("Expected error when running without profile argument, got nil")
@@ -37,7 +37,7 @@ func TestJWTDeleteCommand_MissingArgument(t *testing.T) {
 
 func TestJWTDeleteCommand_NonExistentProfile(t *testing.T) {
 	cmd := exec.Command("go", "run", "main.go", "jwt", "delete", "non-existent-profile")
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Error("Expected error when running with non-existent profile, got nil")

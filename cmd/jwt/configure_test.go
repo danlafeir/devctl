@@ -1,4 +1,4 @@
-package cmd
+package jwt
 
 import (
 	"os/exec"
@@ -27,7 +27,7 @@ func TestJWTConfigureCommand_Flags(t *testing.T) {
 		"--scopes", "scope1 scope2",
 		"--audience", "aud-flags",
 	)
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to run jwt configure with flags: %v\nOutput: %s", err, string(output))
@@ -74,7 +74,7 @@ func TestJWTConfigureCommand_Interactive(t *testing.T) {
 
 	cmd := exec.Command("go", "run", "main.go", "jwt", "configure")
 	cmd.Stdin = strings.NewReader(input)
-	cmd.Dir = "../"
+	cmd.Dir = "../../"
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("Failed to run jwt configure interactively: %v\nOutput: %s", err, string(output))

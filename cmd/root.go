@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/danlafeir/devctl/cmd/jwt"
 	"github.com/danlafeir/devctl/pkg/plugin"
 	"github.com/danlafeir/devctl/pkg/update"
 	"github.com/spf13/cobra"
@@ -103,5 +104,6 @@ func init() {
 	// Disable the help command
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(jwt.GetJWTCommand())
 	plugin.RegisterPlugins(rootCmd)
 }

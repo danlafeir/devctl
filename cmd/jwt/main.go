@@ -1,7 +1,7 @@
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
-package cmd
+package jwt
 
 import (
 	"fmt"
@@ -9,6 +9,9 @@ import (
 	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 )
+
+// These are provided by main.go via cmd package
+var BuildGitHash string
 
 // Add this to ensure secretsProvider is shared across files
 var secretsProvider secrets.SecretsProvider = secrets.DefaultSecretsProvider
@@ -59,8 +62,17 @@ var jwtListCmd = &cobra.Command{
 	},
 }
 
+func GetJWTCommand() *cobra.Command {
+	jwtCmd.AddCommand(jwtConfigureCmd)
+	jwtCmd.AddCommand(jwtGenerateCmd)
+	jwtCmd.AddCommand(jwtDeleteCmd)
+	jwtCmd.AddCommand(jwtListCmd)
+	return jwtCmd
+}
+
 func init() {
-	rootCmd.AddCommand(jwtCmd)
+	jwtCmd.AddCommand(jwtConfigureCmd)
+	jwtCmd.AddCommand(jwtGenerateCmd)
 	jwtCmd.AddCommand(jwtDeleteCmd)
 	jwtCmd.AddCommand(jwtListCmd)
 }
