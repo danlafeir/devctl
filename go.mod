@@ -3,7 +3,7 @@ module github.com/danlafeir/devctl
 go 1.24.3
 
 require (
-	github.com/golang-jwt/jwt/v5 v5.2.0
+	github.com/keybase/go-keychain v0.0.1
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/oauth2 v0.30.0
 )
@@ -11,7 +11,6 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-	github.com/keybase/go-keychain v0.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
