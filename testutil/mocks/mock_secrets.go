@@ -2,38 +2,48 @@ package mocks
 
 import (
 	"fmt"
-	"github.com/danlafeir/devctl/pkg/secrets"
+	"strings"
 )
 
 // MockSecrets is an in-memory implementation for tests
 // Not thread-safe, but sufficient for unit tests
 type MockSecrets struct {
-	store map[string]*secrets.OAuthClient
+	store map[string]string
 }
 
 func NewMockSecrets() *MockSecrets {
-	return &MockSecrets{store: make(map[string]*secrets.OAuthClient)}
+	return &MockSecrets{store: make(map[string]string)}
 }
 
-func (m *MockSecrets) GetOAuthClient(profile string) (*secrets.OAuthClient, error) {
-	c, ok := m.store[profile]
+func (m *MockSecrets) Read(cmd, token string) (string, error) {
+	key := fmt.Sprintf("cli.devctl.%s.%s", cmd, token)
+	value, ok := m.store[key]
 	if !ok {
-		return nil, fmt.Errorf("profile not found")
+		return "", fmt.Errorf("key not found: %s", key)
 	}
-	return c, nil
+	return value, nil
 }
-func (m *MockSecrets) StoreOAuthClient(profile string, client *secrets.OAuthClient) error {
-	m.store[profile] = client
+
+func (m *MockSecrets) Write(cmd, token, value string) error {
+	key := fmt.Sprintf("cli.devctl.%s.%s", cmd, token)
+	m.store[key] = value
 	return nil
 }
-func (m *MockSecrets) ListOAuthProfiles() ([]string, error) {
-	profiles := make([]string, 0, len(m.store))
+
+func (m *MockSecrets) List(cmd string) ([]string, error) {
+	prefix := fmt.Sprintf("cli.devctl.%s.", cmd)
+	var tokens []string
 	for k := range m.store {
-		profiles = append(profiles, k)
+		if strings.HasPrefix(k, prefix) {
+			token := strings.TrimPrefix(k, prefix)
+			tokens = append(tokens, token)
+		}
 	}
-	return profiles, nil
+	return tokens, nil
 }
-func (m *MockSecrets) DeleteOAuthClient(profile string) error {
-	delete(m.store, profile)
+
+func (m *MockSecrets) Delete(cmd, token string) error {
+	key := fmt.Sprintf("cli.devctl.%s.%s", cmd, token)
+	delete(m.store, key)
 	return nil
 }

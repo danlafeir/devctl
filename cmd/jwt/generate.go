@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
+	"github.com/danlafeir/devctl/pkg/config"
+	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2/clientcredentials"
 )
@@ -29,8 +32,6 @@ This command retrieves OAuth client credentials from the secrets using the speci
 }
 
 func init() {
-	jwtCmd.AddCommand(jwtGenerateCmd)
-
 	// Add the --profile flag
 	jwtGenerateCmd.Flags().StringVarP(&profileFlag, "profile", "p", "", "OAuth client profile name (required)")
 	jwtGenerateCmd.MarkFlagRequired("profile")
@@ -45,10 +46,58 @@ func runJWTGenerateWithWriter(cmd *cobra.Command, args []string, w io.Writer) er
 		return fmt.Errorf("profile flag is required")
 	}
 
-	// Get OAuth client from secrets (now via interface)
-	client, err := secretsProvider.GetOAuthClient(profileFlag)
+	// Initialize config
+	if err := config.InitConfig(""); err != nil {
+		return fmt.Errorf("failed to initialize config: %w", err)
+	}
+
+	// Get OAuth client config from config file
+	profiles, err := config.FetchConfig("jwt")
 	if err != nil {
-		return fmt.Errorf("failed to get OAuth client from secrets: %w", err)
+		return fmt.Errorf("failed to fetch config: %w", err)
+	}
+
+	profileData, exists := profiles[profileFlag]
+	if !exists {
+		return fmt.Errorf("profile '%s' not found", profileFlag)
+	}
+
+	profileMap, ok := profileData.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid profile configuration for '%s'", profileFlag)
+	}
+
+	// Extract config values
+	clientID, _ := profileMap["client_id"].(string)
+	clientSecretRef, _ := profileMap["client_secret"].(string)
+	tokenURL, _ := profileMap["token_url"].(string)
+	scopes, _ := profileMap["scopes"].(string)
+	audience, _ := profileMap["audience"].(string)
+
+	// Resolve client secret from secrets store if it's a reference
+	var clientSecret string
+	if strings.HasPrefix(clientSecretRef, "secret:") {
+		secretToken := strings.TrimPrefix(clientSecretRef, "secret:")
+		clientSecret, err = secrets.DefaultSecretsProvider.Read("jwt", secretToken)
+		if err != nil {
+			return fmt.Errorf("failed to read client secret from secrets store: %w", err)
+		}
+		clientSecret = strings.TrimSpace(clientSecret)
+	} else {
+		clientSecret = clientSecretRef
+	}
+
+	if clientID == "" || clientSecret == "" || tokenURL == "" {
+		return fmt.Errorf("incomplete OAuth client configuration for profile '%s'", profileFlag)
+	}
+
+	// Create OAuth client
+	client := &secrets.OAuthClient{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		TokenURL:     tokenURL,
+		Scopes:       scopes,
+		Audience:     audience,
 	}
 
 	// Use clientcredentials flow to get a token

@@ -6,18 +6,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/danlafeir/devctl/pkg/config"
 	"github.com/danlafeir/devctl/pkg/secrets"
 	"github.com/spf13/cobra"
 )
 
 var (
-	cfgProfile               string
-	cfgClientID              string
-	cfgClientSecret          string
-	cfgTokenURL              string
-	cfgScopes                string
-	cfgAudience              string
-	configureSecretsProvider secrets.SecretsProvider = secrets.DefaultSecretsProvider
+	cfgProfile      string
+	cfgClientID     string
+	cfgClientSecret string
+	cfgTokenURL     string
+	cfgScopes       string
+	cfgAudience     string
 )
 
 var jwtConfigureCmd = &cobra.Command{
@@ -28,8 +28,6 @@ var jwtConfigureCmd = &cobra.Command{
 }
 
 func init() {
-	jwtCmd.AddCommand(jwtConfigureCmd)
-
 	jwtConfigureCmd.Flags().StringVarP(&cfgProfile, "profile", "p", "", "Profile name (required)")
 	jwtConfigureCmd.Flags().StringVar(&cfgClientID, "client-id", "", "OAuth client ID")
 	jwtConfigureCmd.Flags().StringVar(&cfgClientSecret, "client-secret", "", "OAuth client secret or private key")
@@ -76,17 +74,28 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 		cfgAudience = strings.TrimSpace(cfgAudience)
 	}
 
-	client := &secrets.OAuthClient{
-		ClientID:     cfgClientID,
-		ClientSecret: cfgClientSecret,
-		TokenURL:     cfgTokenURL,
-		Scopes:       cfgScopes,
-		Audience:     cfgAudience,
+	// Initialize config
+	if err := config.InitConfig(""); err != nil {
+		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
-	err := configureSecretsProvider.StoreOAuthClient(cfgProfile, client)
-	if err != nil {
-		return fmt.Errorf("failed to store OAuth client: %w", err)
+	// Store the client_secret in secrets store using cli.devctl.jwt.<profile>-client-secret
+	secretToken := fmt.Sprintf("%s-client-secret", cfgProfile)
+	if err := secrets.DefaultSecretsProvider.Write("jwt", secretToken, cfgClientSecret); err != nil {
+		return fmt.Errorf("failed to store client secret: %w", err)
+	}
+
+	// Store non-secret config with reference to secret
+	config.SetConfigValue("jwt", cfgProfile, map[string]interface{}{
+		"client_id":     cfgClientID,
+		"client_secret": fmt.Sprintf("secret:%s", secretToken),
+		"token_url":     cfgTokenURL,
+		"scopes":        cfgScopes,
+		"audience":      cfgAudience,
+	})
+	
+	if err := config.WriteConfig(); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
 	}
 
 	fmt.Printf("Profile '%s' configured successfully.\n", cfgProfile)

@@ -1,27 +1,14 @@
 package secrets
 
-// SecretsProvider defines the interface for secrets operations
-// This allows for mocking in tests.
+// SecretsProvider defines the generic interface for secrets operations
+// This allows for mocking in tests and provides standard CRUD operations.
+// Keys are stored with the naming convention: cli.devctl.<cmd>.<token>
 type SecretsProvider interface {
-	GetOAuthClient(profile string) (*OAuthClient, error)
-	StoreOAuthClient(profile string, client *OAuthClient) error
-	ListOAuthProfiles() ([]string, error)
-	DeleteOAuthClient(profile string) error
+	Read(cmd, token string) (string, error)
+	Write(cmd, token, value string) error
+	List(cmd string) ([]string, error)
+	Delete(cmd, token string) error
 }
 
 // DefaultSecretsProvider is the global secrets provider used in production
 var DefaultSecretsProvider SecretsProvider = &RealSecrets{}
-
-// For backward compatibility, keep the old function names as wrappers
-func GetOAuthClient(profile string) (*OAuthClient, error) {
-	return DefaultSecretsProvider.GetOAuthClient(profile)
-}
-func StoreOAuthClient(profile string, client *OAuthClient) error {
-	return DefaultSecretsProvider.StoreOAuthClient(profile, client)
-}
-func ListOAuthProfiles() ([]string, error) {
-	return DefaultSecretsProvider.ListOAuthProfiles()
-}
-func DeleteOAuthClient(profile string) error {
-	return DefaultSecretsProvider.DeleteOAuthClient(profile)
-}
