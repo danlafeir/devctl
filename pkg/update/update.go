@@ -13,7 +13,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getLatestHash(apiURL, osName, arch string) (string, error) {
+// Config holds the configuration for the updater.
+type Config struct {
+	AppName string // e.g., "devctl" or "devctl-em"
+	Repo    string // e.g., "danlafeir/devctl" or "danlafeir/devctl-em"
+	BaseURL string // optional: override API base URL (for testing)
+}
+
+// DefaultConfig returns the default configuration for devctl.
+func DefaultConfig() Config {
+	return Config{
+		AppName: "devctl",
+		Repo:    "danlafeir/devctl",
+	}
+}
+
+func getLatestHash(cfg Config, osName, arch string) (string, error) {
+	apiURL := cfg.BaseURL
+	if apiURL == "" {
+		apiURL = fmt.Sprintf("https://api.github.com/repos/%s/contents/bin/release", cfg.Repo)
+	}
+
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch from GitHub API: %v", err)
@@ -28,7 +48,7 @@ func getLatestHash(apiURL, osName, arch string) (string, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&contents); err != nil {
 		return "", fmt.Errorf("failed to decode GitHub API response: %v", err)
 	}
-	pattern := fmt.Sprintf("devctl-%s-%s-([a-zA-Z0-9]+)", osName, arch)
+	pattern := fmt.Sprintf("%s-%s-%s-([a-zA-Z0-9]+)", cfg.AppName, osName, arch)
 	re := regexp.MustCompile(pattern)
 	var latestHash string
 	for _, item := range contents {
@@ -46,7 +66,13 @@ func getLatestHash(apiURL, osName, arch string) (string, error) {
 	return latestHash, nil
 }
 
+// RunUpdate checks for and applies updates using the default devctl configuration.
 func RunUpdate(currentHash string, cmd *cobra.Command) {
+	RunUpdateWithConfig(DefaultConfig(), currentHash, cmd)
+}
+
+// RunUpdateWithConfig checks for and applies updates using the provided configuration.
+func RunUpdateWithConfig(cfg Config, currentHash string, cmd *cobra.Command) {
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 	if osName == "darwin" {
@@ -65,8 +91,7 @@ func RunUpdate(currentHash string, cmd *cobra.Command) {
 		cmd.PrintErrln("Unsupported architecture for update")
 		return
 	}
-	apiURL := "https://api.github.com/repos/danlafeir/devctl/contents/bin/release"
-	latestHash, err := getLatestHash(apiURL, osName, arch)
+	latestHash, err := getLatestHash(cfg, osName, arch)
 	if err != nil {
 		cmd.PrintErrf("Failed to get latest hash: %v\n", err)
 		return
@@ -77,8 +102,8 @@ func RunUpdate(currentHash string, cmd *cobra.Command) {
 		cmd.Println("Already up to date.")
 		return
 	}
-	filename := "devctl-" + osName + "-" + arch + "-" + latestHash
-	url := "https://raw.githubusercontent.com/danlafeir/devctl/main/bin/release/" + filename
+	filename := fmt.Sprintf("%s-%s-%s-%s", cfg.AppName, osName, arch, latestHash)
+	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/main/bin/release/%s", cfg.Repo, filename)
 	cmd.Printf("Downloading %s...\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -90,7 +115,7 @@ func RunUpdate(currentHash string, cmd *cobra.Command) {
 		return
 	}
 	defer resp.Body.Close()
-	tmpFile, err := os.CreateTemp("", "devctl-update-*")
+	tmpFile, err := os.CreateTemp("", cfg.AppName+"-update-*")
 	if err != nil {
 		cmd.PrintErrf("Failed to create temp file: %v\n", err)
 		return
@@ -128,5 +153,5 @@ func RunUpdate(currentHash string, cmd *cobra.Command) {
 			return
 		}
 	}
-	cmd.Println("devctl updated to latest version.")
+	cmd.Printf("%s updated to latest version.\n", cfg.AppName)
 }

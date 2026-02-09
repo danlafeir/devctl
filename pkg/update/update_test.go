@@ -15,7 +15,8 @@ func TestGetLatestHash_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	hash, err := getLatestHash(ts.URL, "darwin", "amd64")
+	cfg := Config{AppName: "devctl", BaseURL: ts.URL}
+	hash, err := getLatestHash(cfg, "darwin", "amd64")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -31,7 +32,8 @@ func TestGetLatestHash_NoMatch(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := getLatestHash(ts.URL, "darwin", "amd64")
+	cfg := Config{AppName: "devctl", BaseURL: ts.URL}
+	_, err := getLatestHash(cfg, "darwin", "amd64")
 	if err == nil || !strings.Contains(err.Error(), "no binary found") {
 		t.Errorf("expected no binary found error, got %v", err)
 	}
@@ -43,7 +45,8 @@ func TestGetLatestHash_HTTPError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := getLatestHash(ts.URL, "darwin", "amd64")
+	cfg := Config{AppName: "devctl", BaseURL: ts.URL}
+	_, err := getLatestHash(cfg, "darwin", "amd64")
 	if err == nil || !strings.Contains(err.Error(), "GitHub API returned status 500") {
 		t.Errorf("expected status 500 error, got %v", err)
 	}
@@ -55,7 +58,8 @@ func TestGetLatestHash_BadJSON(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	_, err := getLatestHash(ts.URL, "darwin", "amd64")
+	cfg := Config{AppName: "devctl", BaseURL: ts.URL}
+	_, err := getLatestHash(cfg, "darwin", "amd64")
 	if err == nil || !strings.Contains(err.Error(), "failed to decode") {
 		t.Errorf("expected decode error, got %v", err)
 	}
