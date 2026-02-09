@@ -50,7 +50,6 @@ func TestOAuthClient_JSON(t *testing.T) {
 	}
 }
 
-
 // isMacOS checks if the current platform is macOS
 func isMacOS() bool {
 	cmd := exec.Command("uname", "-s")

@@ -57,6 +57,42 @@ func FetchConfig(cmd string) (map[string]interface{}, error) {
 	return config, nil
 }
 
+// GetConfigValue retrieves a single configuration value for a command.
+// Returns the value and true if found, or nil and false if not found.
+func GetConfigValue(cmd, key string) (interface{}, bool) {
+	fullKey := fmt.Sprintf("%s.%s", cmd, key)
+	if viper.IsSet(fullKey) {
+		return viper.Get(fullKey), true
+	}
+	return nil, false
+}
+
+// ListConfig returns all configured commands and their keys.
+// The returned map has command names as keys and slices of config keys as values.
+func ListConfig() (map[string][]string, error) {
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			return make(map[string][]string), nil
+		}
+		return nil, err
+	}
+
+	result := make(map[string][]string)
+	allSettings := viper.AllSettings()
+
+	for cmd, value := range allSettings {
+		if section, ok := value.(map[string]interface{}); ok {
+			keys := make([]string, 0, len(section))
+			for key := range section {
+				keys = append(keys, key)
+			}
+			result[cmd] = keys
+		}
+	}
+
+	return result, nil
+}
+
 func SetConfigValue(cmd, key string, value interface{}) {
 	viper.Set(fmt.Sprintf("%s.%s", cmd, key), value)
 }
