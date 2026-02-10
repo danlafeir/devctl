@@ -57,7 +57,7 @@ var jwtDeleteCmd = &cobra.Command{
 					secretToken := strings.TrimPrefix(clientSecretRef, "secret:")
 					// Try to delete the secret using the secrets provider
 					// We'll ignore errors since the secret might not exist
-					_ = secrets.DefaultSecretsProvider.Delete("jwt", secretToken)
+					_ = secrets.Delete("jwt", secretToken)
 				}
 			}
 		}

@@ -78,7 +78,7 @@ func runJWTGenerateWithWriter(cmd *cobra.Command, args []string, w io.Writer) er
 	var clientSecret string
 	if strings.HasPrefix(clientSecretRef, "secret:") {
 		secretToken := strings.TrimPrefix(clientSecretRef, "secret:")
-		clientSecret, err = secrets.DefaultSecretsProvider.Read("jwt", secretToken)
+		clientSecret, err = secrets.Read("jwt", secretToken)
 		if err != nil {
 			return fmt.Errorf("failed to read client secret from secrets store: %w", err)
 		}

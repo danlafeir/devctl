@@ -21,65 +21,65 @@ type OAuthClient struct {
 // RealSecrets implements SecretsProvider using the system keychain
 type RealSecrets struct{}
 
-// buildServiceName creates the service name using the naming convention: cli.devctl.<cmd>
-func (r *RealSecrets) buildServiceName(cmd string) string {
-	return fmt.Sprintf("cli.devctl.%s", cmd)
+// buildServiceName creates the service name using the naming convention: cli.devctl.<namespace>
+func (r *RealSecrets) buildServiceName(namespace string) string {
+	return fmt.Sprintf("cli.devctl.%s", namespace)
 }
 
-func (r *RealSecrets) Read(cmd, token string) (string, error) {
-	serviceName := r.buildServiceName(cmd)
-	
-	data, err := keychain.GetGenericPassword(serviceName, token, "", "")
+func (r *RealSecrets) Read(namespace, name string) (string, error) {
+	serviceName := r.buildServiceName(namespace)
+
+	data, err := keychain.GetGenericPassword(serviceName, name, "", "")
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve secret from keychain: %w", err)
 	}
-	
+
 	return string(data), nil
 }
 
-func (r *RealSecrets) Write(cmd, token, value string) error {
-	serviceName := r.buildServiceName(cmd)
-	
-	item := keychain.NewGenericPassword(serviceName, token, "", []byte(value), "")
+func (r *RealSecrets) Write(namespace, name, value string) error {
+	serviceName := r.buildServiceName(namespace)
+
+	item := keychain.NewGenericPassword(serviceName, name, "", []byte(value), "")
 	item.SetSynchronizable(keychain.SynchronizableNo)
 	item.SetAccessible(keychain.AccessibleWhenUnlocked)
-	
+
 	// Try to add the item
 	err := keychain.AddItem(item)
 	if err != nil {
 		// If add fails (item might exist), try to update
-		queryItem := keychain.NewGenericPassword(serviceName, token, "", nil, "")
-		updateItem := keychain.NewGenericPassword(serviceName, token, "", []byte(value), "")
+		queryItem := keychain.NewGenericPassword(serviceName, name, "", nil, "")
+		updateItem := keychain.NewGenericPassword(serviceName, name, "", []byte(value), "")
 		err = keychain.UpdateItem(queryItem, updateItem)
 		if err != nil {
 			return fmt.Errorf("failed to store secret in keychain: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
-func (r *RealSecrets) List(cmd string) ([]string, error) {
-	serviceName := r.buildServiceName(cmd)
-	
+func (r *RealSecrets) List(namespace string) ([]string, error) {
+	serviceName := r.buildServiceName(namespace)
+
 	// Use the convenience function to get accounts for a service
 	accounts, err := keychain.GetAccountsForService(serviceName)
 	if err != nil {
 		// If no items found, return empty list
 		return []string{}, nil
 	}
-	
+
 	return accounts, nil
 }
 
-func (r *RealSecrets) Delete(cmd, token string) error {
-	serviceName := r.buildServiceName(cmd)
-	
-	err := keychain.DeleteGenericPasswordItem(serviceName, token)
+func (r *RealSecrets) Delete(namespace, name string) error {
+	serviceName := r.buildServiceName(namespace)
+
+	err := keychain.DeleteGenericPasswordItem(serviceName, name)
 	if err != nil {
 		return fmt.Errorf("failed to delete secret from keychain: %w", err)
 	}
-	
+
 	return nil
 }
 

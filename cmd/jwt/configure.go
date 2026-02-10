@@ -81,7 +81,7 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 
 	// Store the client_secret in secrets store using cli.devctl.jwt.<profile>-client-secret
 	secretToken := fmt.Sprintf("%s-client-secret", cfgProfile)
-	if err := secrets.DefaultSecretsProvider.Write("jwt", secretToken, cfgClientSecret); err != nil {
+	if err := secrets.Write("jwt", secretToken, cfgClientSecret); err != nil {
 		return fmt.Errorf("failed to store client secret: %w", err)
 	}
 
