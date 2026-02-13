@@ -5,8 +5,6 @@ package secrets
 
 import (
 	"encoding/json"
-	"os/exec"
-	"strings"
 	"testing"
 )
 
@@ -48,14 +46,4 @@ func TestOAuthClient_JSON(t *testing.T) {
 	if unmarshaledClient.Audience != client.Audience {
 		t.Errorf("Audience mismatch: got %s, want %s", unmarshaledClient.Audience, client.Audience)
 	}
-}
-
-// isMacOS checks if the current platform is macOS
-func isMacOS() bool {
-	cmd := exec.Command("uname", "-s")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(string(output)) == "Darwin"
 }

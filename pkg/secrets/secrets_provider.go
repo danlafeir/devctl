@@ -1,5 +1,14 @@
 package secrets
 
+// OAuthClient represents an OAuth client configuration
+type OAuthClient struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	TokenURL     string `json:"token_url"`
+	Scopes       string `json:"scopes"`
+	Audience     string `json:"audience"`
+}
+
 // SecretsProvider defines the generic interface for secrets operations
 // This allows for mocking in tests and provides standard CRUD operations.
 // Keys are stored with the naming convention: cli.devctl.<namespace>.<name>

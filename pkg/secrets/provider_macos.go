@@ -1,3 +1,5 @@
+//go:build darwin
+
 /*
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
@@ -8,15 +10,6 @@ import (
 
 	"github.com/keybase/go-keychain"
 )
-
-// OAuthClient represents an OAuth client configuration
-type OAuthClient struct {
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	TokenURL     string `json:"token_url"`
-	Scopes       string `json:"scopes"`
-	Audience     string `json:"audience"`
-}
 
 // RealSecrets implements SecretsProvider using the system keychain
 type RealSecrets struct{}
