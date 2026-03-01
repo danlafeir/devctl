@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -129,4 +131,100 @@ func DeleteConfigValue(cmd, key string) error {
 	}
 	
 	return WriteConfig()
+}
+
+// ConfigSchema is a list of allowed key patterns under a namespace.
+// Use * as a wildcard for any single path segment.
+// Example: "jira.teams.*.project" matches "jira.teams.plat.project"
+type ConfigSchema []string
+
+// ValidateNamespace checks all keys in config under namespace against schema.
+// Returns unrecognized keys (present in config but not matching any pattern).
+func ValidateNamespace(namespace string, schema ConfigSchema) []string {
+	cfg, err := FetchConfig(namespace)
+	if err != nil || len(cfg) == 0 {
+		return nil
+	}
+
+	keys := flattenKeys("", cfg)
+	var unrecognized []string
+	for _, key := range keys {
+		if !matchesSchema(key, schema) {
+			unrecognized = append(unrecognized, key)
+		}
+	}
+	return unrecognized
+}
+
+// ClearNamespace prints the current config for the namespace, notifies the
+// user the config is invalid, and removes all config under the namespace.
+func ClearNamespace(namespace string) error {
+	cfg, err := FetchConfig(namespace)
+	if err != nil {
+		return err
+	}
+
+	if len(cfg) > 0 {
+		out, _ := yaml.Marshal(cfg)
+		fmt.Fprintf(os.Stderr, "Current %s config:\n%s\n", namespace, string(out))
+	}
+
+	fmt.Fprintf(os.Stderr, "Config for '%s' contains unrecognized keys and has been cleared. Please reconfigure.\n", namespace)
+
+	allSettings := viper.AllSettings()
+	delete(allSettings, namespace)
+
+	viper.Reset()
+	viper.AddConfigPath(configPath)
+	viper.SetConfigName(ConfigFileName)
+	viper.SetConfigType("yaml")
+
+	for k, v := range allSettings {
+		viper.Set(k, v)
+	}
+
+	return WriteConfig()
+}
+
+// flattenKeys recursively produces dot-separated leaf key paths from a nested map.
+func flattenKeys(prefix string, m map[string]interface{}) []string {
+	var keys []string
+	for k, v := range m {
+		full := k
+		if prefix != "" {
+			full = prefix + "." + k
+		}
+		if sub, ok := v.(map[string]interface{}); ok {
+			keys = append(keys, flattenKeys(full, sub)...)
+		} else {
+			keys = append(keys, full)
+		}
+	}
+	return keys
+}
+
+// matchesSchema checks if a key matches any pattern in the schema.
+func matchesSchema(key string, schema ConfigSchema) bool {
+	for _, pattern := range schema {
+		if matchPattern(key, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+// matchPattern checks if a dot-separated key matches a dot-separated pattern
+// where * matches any single segment.
+func matchPattern(key, pattern string) bool {
+	keyParts := strings.Split(key, ".")
+	patParts := strings.Split(pattern, ".")
+	if len(keyParts) != len(patParts) {
+		return false
+	}
+	for i := range keyParts {
+		if patParts[i] != "*" && patParts[i] != keyParts[i] {
+			return false
+		}
+	}
+	return true
 }
