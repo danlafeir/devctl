@@ -18,6 +18,7 @@ type Config struct {
 	AppName string // e.g., "devctl" or "devctl-em"
 	Repo    string // e.g., "danlafeir/devctl" or "danlafeir/devctl-em"
 	BaseURL string // optional: override API base URL (for testing)
+	BinDir  string // subdirectory containing binaries (default "bin/release")
 }
 
 // DefaultConfig returns the default configuration for devctl.
@@ -28,10 +29,17 @@ func DefaultConfig() Config {
 	}
 }
 
+func binDir(cfg Config) string {
+	if cfg.BinDir != "" {
+		return cfg.BinDir
+	}
+	return "bin/release"
+}
+
 func getLatestHash(cfg Config, osName, arch string) (string, error) {
 	apiURL := cfg.BaseURL
 	if apiURL == "" {
-		apiURL = fmt.Sprintf("https://api.github.com/repos/%s/contents/bin/release", cfg.Repo)
+		apiURL = fmt.Sprintf("https://api.github.com/repos/%s/contents/%s", cfg.Repo, binDir(cfg))
 	}
 
 	resp, err := http.Get(apiURL)
@@ -103,7 +111,7 @@ func RunUpdateWithConfig(cfg Config, currentHash string, cmd *cobra.Command) {
 		return
 	}
 	filename := fmt.Sprintf("%s-%s-%s-%s", cfg.AppName, osName, arch, latestHash)
-	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/main/bin/release/%s", cfg.Repo, filename)
+	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/main/%s/%s", cfg.Repo, binDir(cfg), filename)
 	cmd.Printf("Downloading %s...\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
