@@ -19,7 +19,7 @@ build:
 	@echo "Building $(APP_NAME) for $(GOOS)/$(GOARCH)..."
 	@rm -rf $(BUILD_DIR)
 	GIT_HASH=$$(git rev-parse --short HEAD); \
-	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-X 'main.BuildGitHash=$$GIT_HASH' -X 'main.BuildLatestHash=$$GIT_HASH'" -o $(BUILD_DIR)/$(APP_NAME)./main.go
+	GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags "-X 'main.BuildGitHash=$$GIT_HASH' -X 'main.BuildLatestHash=$$GIT_HASH'" -o $(BUILD_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)-$$GIT_HASH ./main.go
 
 build-all:
 	@echo "Building $(APP_NAME) for all supported OS/ARCH combinations..."
