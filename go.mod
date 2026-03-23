@@ -3,16 +3,16 @@ module github.com/danlafeir/dev
 go 1.24.3
 
 require (
-	github.com/keybase/dbus v0.0.0-20220506165403-5aa21ea2c23a
-	github.com/keybase/go-keychain v0.0.1
+	github.com/danlafeir/cli-go v0.0.0-20260323031732-bc4f5c2722cf
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/oauth2 v0.30.0
 )
 
 require (
-	github.com/danlafeir/cli-go v0.0.0-20260323031732-bc4f5c2722cf // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/keybase/dbus v0.0.0-20220506165403-5aa21ea2c23a // indirect
+	github.com/keybase/go-keychain v0.0.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -30,5 +30,5 @@ require (
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	github.com/spf13/viper v1.20.1
+	github.com/spf13/viper v1.20.1 // indirect
 )
