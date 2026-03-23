@@ -1,4 +1,4 @@
-module github.com/danlafeir/devctl
+module github.com/danlafeir/dev
 
 go 1.24.3
 
@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/danlafeir/cli-go v0.0.0-20260323031732-bc4f5c2722cf // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/danlafeir/devctl/cmd"
+	"github.com/danlafeir/dev/cmd"
 )
 
 // BuildGitHash is set at build time via -ldflags
@@ -23,7 +23,7 @@ func checkUpgrade() {
 	if err != nil {
 		return // fail silently
 	}
-	checkFile := filepath.Join(configDir, "devctl", "upgrade-check")
+	checkFile := filepath.Join(configDir, "dev", "upgrade-check")
 	os.MkdirAll(filepath.Dir(checkFile), 0o755)
 
 	today := time.Now().Format("2006-01-02")
@@ -39,7 +39,7 @@ func checkUpgrade() {
 	// Check remote for latest hash
 	remoteHash := BuildLatestHash
 	if remoteHash != "" && remoteHash != BuildGitHash {
-		fmt.Fprintf(os.Stderr, "A new version of devctl is available (hash: %s). Please upgrade.\n", remoteHash)
+		fmt.Fprintf(os.Stderr, "A new version of dev is available (hash: %s). Please upgrade.\n", remoteHash)
 	}
 
 	// Write today's check

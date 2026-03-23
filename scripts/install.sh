@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-REPO=danlafeir/devctl
-BINARY=devctl
+REPO=danlafeir/dev
+BINARY=dev
 INSTALL_DIR=~/.local/bin
 
 # Detect OS

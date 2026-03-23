@@ -1,4 +1,6 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
+github.com/danlafeir/cli-go v0.0.0-20260323031732-bc4f5c2722cf h1:DZ3KcviKV2AAnz7hiFhzs6yI7Y26uwgSpH0rDstvJ7Y=
+github.com/danlafeir/cli-go v0.0.0-20260323031732-bc4f5c2722cf/go.mod h1:x4b9LIFe/4RP7mqH4kLV5XObHrrpCjg1C8DOt7CMWN0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

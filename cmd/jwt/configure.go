@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/danlafeir/devctl/pkg/config"
-	"github.com/danlafeir/devctl/pkg/secrets"
+	"github.com/danlafeir/cli-go/pkg/config"
+	"github.com/danlafeir/cli-go/pkg/secrets"
 	"github.com/spf13/cobra"
 )
 
@@ -79,7 +79,7 @@ func runJWTConfigure(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
-	// Store the client_secret in secrets store using cli.devctl.jwt.<profile>-client-secret
+	// Store the client_secret in secrets store using cli.dev.jwt.<profile>-client-secret
 	secretToken := fmt.Sprintf("%s-client-secret", cfgProfile)
 	if err := secrets.Write("jwt", secretToken, cfgClientSecret); err != nil {
 		return fmt.Errorf("failed to store client secret: %w", err)

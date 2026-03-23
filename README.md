@@ -1,4 +1,4 @@
-# devctl
+# dev
 
 I want a developer interface that codifies rote logic execution. And I am experimenting with AI Agentic code to find the sharp edges.
 
@@ -34,7 +34,7 @@ To build the project for your current OS/architecture:
 make build
 ```
 
-This will produce a binary named `devctl` in the `bin/` directory for your current system.
+This will produce a binary named `dev` in the `bin/` directory for your current system.
 
 To cross-compile for another system (e.g., Linux amd64):
 
@@ -42,14 +42,14 @@ To cross-compile for another system (e.g., Linux amd64):
 GOOS=linux GOARCH=amd64 make build
 ```
 
-This will also produce a binary named `devctl` in the `bin/` directory, but for the specified target system.
+This will also produce a binary named `dev` in the `bin/` directory, but for the specified target system.
 
 ## Quick Install (Online Script)
 
-You can install the latest `devctl` binary automatically with a one-liner (Linux/macOS):
+You can install the latest `dev` binary automatically with a one-liner (Linux/macOS):
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/danlafeir/devctl/main/scripts/install.sh | sh
+curl -sSL https://raw.githubusercontent.com/danlafeir/dev/main/scripts/install.sh | sh
 ```
 
 This script will detect your OS and architecture, download the correct binary from the main branch, and install it to `~/.local/bin` (you may be prompted for your password).
